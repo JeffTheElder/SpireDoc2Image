@@ -1,0 +1,50 @@
+using Spire.Doc;
+using Spire.Doc.Documents;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
+
+namespace ConsoleApp
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            
+            byte[] buffer = File.ReadAllBytes(@"C:\Users\Jefferson\Desktop\sample.doc"); //the path must be the one where the doc file to be converted is placed
+
+            using (MemoryStream stream = new MemoryStream(buffer))
+            {
+                Document doc = new Document();
+                doc.LoadFromStream(stream, FileFormat.Auto);
+                Break pageBreak = new Break(doc, BreakType.PageBreak);
+                doc.Sections[0].Paragraphs[0].ChildObjects.Insert(0, pageBreak);
+                int count = doc.PageCount;
+                List<byte[]> OutputImgList = new List<byte[]>();
+                for (int index = 0; index < count; index++)
+                {
+                    Bitmap img = (Bitmap)doc.SaveToImages(index, ImageType.Bitmap);
+                    ImageConverter _imageConverter = new ImageConverter();
+                    if (index != 0)
+                    {
+                        OutputImgList.Add((byte[])_imageConverter.ConvertTo(img, typeof(byte[])));
+                    }
+                }
+
+                for (int n_index = 0; n_index < OutputImgList.Count; n_index++)
+                {
+                    using (var ms = new MemoryStream(OutputImgList[n_index]))
+                    {
+                        System.Drawing.Image.FromStream(ms).Save(string.Format(@"C:\Users\Jefferson\Desktop\sample{0}.bmp", n_index)); //the path must be the one where the image files to be saved will be saved
+                    }
+                }
+            }
+        }
+    }
+}
